@@ -5,17 +5,20 @@ have multiple aliases of a location in memory while mutating it. Unless these ty
 synchronization to manage this access, they are absolutely not thread-safe. Rust
 captures this through the `Send` and `Sync` traits.
 
-* A type is Send if it is safe to send it to another thread.
-* A type is Sync if it is safe to share between threads (`&T` is Send).
+* A type is Send if it is safe to send it to another thread. (`&T` is `Send`)
+* A type is Sync if it is safe to share between threads.
 
 Send and Sync are fundamental to Rust's concurrency story. As such, a
-substantial amount of special tooling exists to make them work right. First and
-foremost, they're [unsafe traits]. This means that they are unsafe to
-implement, and other unsafe code can assume that they are correctly
-implemented. Since they're *marker traits* (they have no associated items like
-methods), correctly implemented simply means that they have the intrinsic
-properties an implementor should have. Incorrectly implementing Send or Sync can
-cause Undefined Behavior.
+substantial amount of special tooling exists to make them work correctly:
+
+* First and foremost, they're [unsafe traits] and are intrinsics (*part of the language*).
+* They're *marker traits* (they have no associated items like methods);
+* Other unsafe code can use them safely.
+* *Correctly implemented* simply means that they have been carefully
+  implemented and can be expected to behave correctly when *used*.
+* They're unsafe to *implement* but can be *used* and are assumed to be
+  *correctly implemented*. Incorrectly *implementing* Send or Sync can
+  cause Undefined Behavior; again: *use* them; (probably) don't *implement* them.
 
 Send and Sync are also automatically derived traits. This means that, unlike
 every other trait, if a type is composed entirely of Send or Sync types, then it
@@ -35,11 +38,11 @@ with a raw pointer requires dereferencing it, which is already unsafe. In that
 sense, one could argue that it would be "fine" for them to be marked as thread
 safe.
 
-However it's important that they aren't thread-safe to prevent types that
-contain them from being automatically marked as thread-safe. These types have
+However, it's important that they aren't `Sync` to prevent types that
+contain them from being automatically marked as `Sync`. These types have
 non-trivial untracked ownership, and it's unlikely that their author was
-necessarily thinking hard about thread safety. In the case of `Rc`, we have a nice
-example of a type that contains a `*mut` that is definitely not thread-safe.
+necessarily thinking hard about thread safety. In particular, `Rc` contains a
+`*mut` and is definitely not thread-safe.
 
 Types that aren't automatically derived can simply implement them if desired:
 
